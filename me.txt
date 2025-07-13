@@ -1,0 +1,349 @@
+sw1
+Imports System
+Imports System.Data.Entity
+
+' Base class
+Public Class Person
+    Public Property Id As Integer
+    Public Property Name As String
+End Class
+
+' Derived class: Student
+Public Class Student
+    Inherits Person
+    Public Property Grade As String
+End Class
+
+' Derived class: Teacher
+Public Class Teacher
+    Inherits Person
+    Public Property Subject As String
+End Class
+
+' Entity Framework context
+Public Class SchoolDbContext
+    Inherits DbContext
+
+    Public Property People As DbSet(Of Person)
+End Class
+
+Module Module1
+    Sub Main()
+
+        Database.SetInitializer(New DropCreateDatabaseIfModelChanges(Of SchoolDbContext)())
+
+        Using db As New SchoolDbContext()
+
+            db.People.Add(New Student With {.Name = "David", .Grade = "10"})
+            db.People.Add(New Student With {.Name = "Ella", .Grade = "11"})
+            db.People.Add(New Student With {.Name = "Faye", .Grade = "12"})
+            db.People.Add(New Student With {.Name = "Gino", .Grade = "10"})
+            db.People.Add(New Student With {.Name = "Mia", .Grade = "9"})
+            db.People.Add(New Student With {.Name = "Lance", .Grade = "11"})
+
+            db.People.Add(New Teacher With {.Name = "Sir Leo", .Subject = "Math"})
+            db.People.Add(New Teacher With {.Name = "Ma'am Joy", .Subject = "Science"})
+            db.People.Add(New Teacher With {.Name = "Sir Carlo", .Subject = "History"})
+            db.People.Add(New Teacher With {.Name = "Ma'am Tess", .Subject = "English"})
+
+            db.SaveChanges()
+            Console.WriteLine("Data saved." & vbCrLf)
+
+            Console.WriteLine("People List:")
+            For Each person In db.People.ToList()
+                If TypeOf person Is Student Then
+                    Dim s = CType(person, Student)
+                    Console.WriteLine($"Student: {s.Name}, Grade: {s.Grade}")
+                ElseIf TypeOf person Is Teacher Then
+                    Dim t = CType(person, Teacher)
+                    Console.WriteLine($"Teacher: {t.Name}, Subject: {t.Subject}")
+                End If
+            Next
+
+        End Using
+
+        Console.WriteLine(vbCrLf & "Pr:wqess any key to exit.")
+        Console.ReadLine()
+    End Sub
+End Module
+
+
+
+-------
+sw2
+Imports System
+Imports System.Data.Entity
+
+' Customer class
+Public Class Customer
+    Public Property Id As Integer
+    Public Property Name As String
+    Public Property Email As String
+End Class
+
+' EF DbContext
+Public Class AppDbContext
+    Inherits DbContext
+    Public Property Customers As DbSet(Of Customer)
+End Class
+
+Module Module1
+    Sub Main()
+        ' Auto-create DB if needed
+        Database.SetInitializer(New DropCreateDatabaseIfModelChanges(Of AppDbContext)())
+
+        Using db As New AppDbContext()
+
+            ' Clear old data (optional if rerunning multiple times)
+            db.Customers.RemoveRange(db.Customers)
+            db.SaveChanges()
+
+            ' Add 10 customers
+            Dim customers As New List(Of Customer) From {
+                New Customer With {.Name = "Maria", .Email = "maria@example.com"},
+                New Customer With {.Name = "Juan", .Email = "juan@example.com"},
+                New Customer With {.Name = "Ana", .Email = "ana@example.com"},
+                New Customer With {.Name = "Ben", .Email = "ben@example.com"},
+                New Customer With {.Name = "Chloe", .Email = "chloe@example.com"},
+                New Customer With {.Name = "Dante", .Email = "dante@example.com"},
+                New Customer With {.Name = "Ella", .Email = "ella@example.com"},
+                New Customer With {.Name = "Fred", .Email = "fred@example.com"},
+                New Customer With {.Name = "Grace", .Email = "grace@example.com"},
+                New Customer With {.Name = "Hugo", .Email = "hugo@example.com"}
+            }
+
+            db.Customers.AddRange(customers)
+            db.SaveChanges()
+
+   
+            Dim maria = db.Customers.FirstOrDefault(Function(c) c.Name = "Maria")
+            If maria IsNot Nothing Then
+                maria.Email = "maria.updated@example.com"
+            End If
+
+            ' --- Delete Juan ---
+            Dim juan = db.Customers.FirstOrDefault(Function(c) c.Name = "Juan")
+            If juan IsNot Nothing Then
+                db.Customers.Remove(juan)
+            End If
+
+            db.SaveChanges()
+
+            ' --- Display all remaining customers ---
+            Console.WriteLine("🔹 Customer List:")
+            For Each c In db.Customers.ToList()
+                Console.WriteLine($"ID: {c.Id}, Name: {c.Name}, Email: {c.Email}")
+            Next
+
+        End Using
+
+        Console.WriteLine(vbCrLf & "Press any key to exit.")
+        Console.ReadLine()
+    End Sub
+End Module
+
+---------
+labact
+
+
+CREATE DATABASE TownieDB;
+USE TownieDB;
+
+CREATE TABLE Townies (
+    Id INT AUTO_INCREMENT PRIMARY KEY,
+    Name VARCHAR(100) NOT NULL,
+    Profession VARCHAR(100) NOT NULL
+);
+
+//install mysql.data & entityframework
+
+Imports System
+Imports MySql.Data.MySqlClient
+Imports System.Data
+
+' Main form class (must be first for designer support)
+Public Class Form1
+    ' MySQL connection string - modify according to your MySQL setup
+    Private connectionString As String = "Server=localhost;Database=TownieDB;Uid=root;Pwd=;"
+
+    Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        ' Add sample data if table is empty
+        AddSampleData()
+
+        ' Load data into DataGridView
+        LoadData()
+    End Sub
+
+    Private Sub AddSampleData()
+        Try
+            Using connection As New MySqlConnection(connectionString)
+                connection.Open()
+
+                ' Check if data already exists
+                Dim checkQuery As String = "SELECT COUNT(*) FROM Townies"
+                Using checkCommand As New MySqlCommand(checkQuery, connection)
+                    Dim count As Integer = CInt(checkCommand.ExecuteScalar())
+
+                    ' Only add sample data if table is empty
+                    If count = 0 Then
+                        Dim sampleData As String() = {
+                            "('Carol', 'Mayor')",
+                            "('Dess', 'Student')",
+                            "('Kris', 'Student')",
+                            "('Susie', 'Student')",
+                            "('Noelle', 'Student')",
+                            "('Rudy', 'Unemployed')",
+                            "('Berdly', 'Librarian')",
+                            "('Alphys', 'Teacher')",
+                            "('Undyne', 'Police Chief')",
+                            "('Asgore', 'Florist')",
+                            "('Alvin', 'Priest')",
+                            "('Toriel', 'Teacher')",
+                            "('Asriel', 'Student')",
+                            "('Gerson', 'Writer')",
+                            "('Temmie', 'Temmie')"
+                        }
+
+                        For Each data As String In sampleData
+                            Dim insertQuery As String = "INSERT INTO Townies (Name, Profession) VALUES " & data
+                            Using command As New MySqlCommand(insertQuery, connection)
+                                command.ExecuteNonQuery()
+                            End Using
+                        Next
+                    End If
+                End Using
+            End Using
+        Catch ex As Exception
+            MessageBox.Show("Error adding sample data: " & ex.Message)
+        End Try
+    End Sub
+
+    Private Sub LoadData()
+        Try
+            Using connection As New MySqlConnection(connectionString)
+                connection.Open()
+
+                Dim query As String = "SELECT Id, Name, Profession FROM Townies ORDER BY Name"
+                Using adapter As New MySqlDataAdapter(query, connection)
+                    Dim dataTable As New DataTable()
+                    adapter.Fill(dataTable)
+                    DataGridView1.DataSource = dataTable
+                End Using
+            End Using
+        Catch ex As Exception
+            MessageBox.Show("Error loading data: " & ex.Message)
+        End Try
+    End Sub
+
+    Private Sub Insert_Click(sender As Object, e As EventArgs) Handles Insert.Click
+        Dim name As String = TextBox1.Text.Trim()
+        Dim profession As String = TextBox2.Text.Trim()
+
+        If String.IsNullOrEmpty(name) Or String.IsNullOrEmpty(profession) Then
+            MessageBox.Show("Please enter both name and profession.")
+            Return
+        End If
+
+        Try
+            Using connection As New MySqlConnection(connectionString)
+                connection.Open()
+
+                Dim query As String = "INSERT INTO Townies (Name, Profession) VALUES (@Name, @Profession)"
+                Using command As New MySqlCommand(query, connection)
+                    command.Parameters.AddWithValue("@Name", name)
+                    command.Parameters.AddWithValue("@Profession", profession)
+                    command.ExecuteNonQuery()
+                End Using
+            End Using
+
+            ' Clear textboxes and refresh data
+            TextBox1.Clear()
+            TextBox2.Clear()
+            LoadData()
+            MessageBox.Show("Townie added successfully!")
+
+        Catch ex As Exception
+            MessageBox.Show("Error inserting data: " & ex.Message)
+        End Try
+    End Sub
+
+    Private Sub Update_Click(sender As Object, e As EventArgs) Handles Update.Click
+        If DataGridView1.CurrentRow Is Nothing Then
+            MessageBox.Show("Please select a villager to update.")
+            Return
+        End If
+
+        Dim name As String = TextBox1.Text.Trim()
+        Dim profession As String = TextBox2.Text.Trim()
+
+        If String.IsNullOrEmpty(name) Or String.IsNullOrEmpty(profession) Then
+            MessageBox.Show("Please enter both name and profession.")
+            Return
+        End If
+
+        Try
+            Dim id As Integer = CInt(DataGridView1.CurrentRow.Cells("Id").Value)
+
+            Using connection As New MySqlConnection(connectionString)
+                connection.Open()
+
+                Dim query As String = "UPDATE Townies SET Name = @Name, Profession = @Profession WHERE Id = @Id"
+                Using command As New MySqlCommand(query, connection)
+                    command.Parameters.AddWithValue("@Name", name)
+                    command.Parameters.AddWithValue("@Profession", profession)
+                    command.Parameters.AddWithValue("@Id", id)
+                    command.ExecuteNonQuery()
+                End Using
+            End Using
+
+            ' Clear textboxes and refresh data
+            TextBox1.Clear()
+            TextBox2.Clear()
+            LoadData()
+            MessageBox.Show("Townie updated successfully!")
+
+        Catch ex As Exception
+            MessageBox.Show("Error updating data: " & ex.Message)
+        End Try
+    End Sub
+
+    Private Sub Delete_Click(sender As Object, e As EventArgs) Handles Delete.Click
+        If DataGridView1.CurrentRow Is Nothing Then
+            MessageBox.Show("Please select a villager to delete.")
+            Return
+        End If
+
+        Dim result As DialogResult = MessageBox.Show("Are you sure you want to delete this townie?", "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
+
+        If result = DialogResult.Yes Then
+            Try
+                Dim id As Integer = CInt(DataGridView1.CurrentRow.Cells("Id").Value)
+
+                Using connection As New MySqlConnection(connectionString)
+                    connection.Open()
+
+                    Dim query As String = "DELETE FROM Townies WHERE Id = @Id"
+                    Using command As New MySqlCommand(query, connection)
+                        command.Parameters.AddWithValue("@Id", id)
+                        command.ExecuteNonQuery()
+                    End Using
+                End Using
+
+                LoadData()
+                MessageBox.Show("Townie deleted successfully!")
+
+            Catch ex As Exception
+                MessageBox.Show("Error deleting data: " & ex.Message)
+            End Try
+        End If
+    End Sub
+
+    Private Sub DataGridView1_SelectionChanged(sender As Object, e As EventArgs) Handles DataGridView1.SelectionChanged
+        ' Auto-fill textboxes when a row is selected
+        If DataGridView1.CurrentRow IsNot Nothing Then
+            TextBox1.Text = DataGridView1.CurrentRow.Cells("Name").Value.ToString()
+            TextBox2.Text = DataGridView1.CurrentRow.Cells("Profession").Value.ToString()
+        End If
+    End Sub
+End Class
+
